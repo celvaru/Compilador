@@ -8,8 +8,8 @@ namespace AnalizadorLexico
 {
     internal class Simbolo
     {
-        public string? Lexema {  get; set; }
-        public string? Token { get; set; }
+        public string Lexema {  get; set; }
+        public string Token { get; set; }
         public int Linea { get; set; }
         public int Columna { get; set; }
     }

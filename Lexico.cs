@@ -21,18 +21,18 @@ namespace AnalizadorLexico
 
         Dictionary<string, string> Expresiones = new Dictionary<string, string>()
         {
-            {"PalabraReservada", @"\b(prog|res|si|sino|cuando|para|lee|imp|salto)\b" },
+            {"PalabraReservada", @"\b(prog|si|sino|cuando|para|lee|imp|salto)\b" },
             {"TipoDato", @"\b(ent|dec|sim)\b" },
-            {"Comentario", @"\b//.*\b" },
-            {"Concatenar", @"\b<<\b" },
+            {"Comentario", @"//.*"},
+            {"Concatenar", @"<<"},
             {"Cadena", @"""[^""]*"""},
             {"Caracter", @"'[^']'"},
-            {"Leer", @"\b>>\b" },
+            {"Leer", @">>" },
             {"Entero", @"[+-]?\d+"},
             {"Decimal", @"[+-]?(\d+\.\d*|\.\d+)([eE][+-]?\d+)?"},
             {"Variable", @"\b(_|[a-zA-Z])(_|[a-zA-Z]|\d)*\b"},
-            {"OperadorAritmetico", @"[+\-*/%]"},
-            {"OperadorLogico", @"\b(<=|>=|==|!=|<|>)\b"},
+            {"OperadorAritmetico", @"\b[+\-*/%]\b"},
+            {"OperadorRelacional", @"==|!=|<=|>=|<|>"},
             {"Asignacion", @"="},
             {"Aumentar", @"\+\+|--"},
             {"ParentesisAbierto", @"\("},
@@ -74,7 +74,7 @@ namespace AnalizadorLexico
                     }
 
                     string tokenName = GetToken(value);
-                    if (tokenName != "Comentario" && tokenName != "ComentarioBloque")
+                    if (tokenName != "Comentario")
                     {
                         TablaSimbolos.Add(new Simbolo
                         {
@@ -84,7 +84,7 @@ namespace AnalizadorLexico
                             Columna = match.Index + 1
                         });
                     }
-
+                  
                     currentIndex = match.Index + match.Length;
                 }
 
