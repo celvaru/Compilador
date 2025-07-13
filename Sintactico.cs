@@ -98,21 +98,36 @@ namespace Compilador
             {
                 return true;
             }
-            index = startIndex; 
+            index = startIndex;
 
             if (Lectura(ts, ref index))
             {
                 return true;
             }
-            index = startIndex; 
+            index = startIndex;
 
             if (Escritura(ts, ref index))
             {
                 return true;
             }
-            index = startIndex; 
+            index = startIndex;
+            if (Si(ts, ref index))
+            {
+                return true;
+            }
+            index = startIndex;
+            if (Cuando(ts, ref index))
+            {
+                return true;
+            }
+            index = startIndex;
+            if (Para(ts, ref index))
+            {
+                return true;
+            }
+            index = startIndex;
 
-            Errors.Add($"Error ({ts[index].Linea}): Se esperaba declaración, asignación, lectura o impresión");
+            Errors.Add($"Error ({ts[index].Linea}): Se esperaba una sentencia");
             return false;
 
         }
@@ -192,17 +207,308 @@ namespace Compilador
         }
         private bool Asignacion(List<Simbolo> ts, ref int index)
         {
+            int startIndex = index;
+
+            if (index < 0 || index >= ts.Count) return false;
+
+            if (ts[index].Token != "Variable")
+            {
+                return false;
+            }
+            index++;
+            if (index >= ts.Count) return false;
+
+            if (ts[index].Lexema != "=")
+            {
+                Errors.Add($"Error ({ts[startIndex].Linea}): Se esperaba '=' ");
+                index = startIndex;
+                return false;
+            }
+            string operador = ts[index].Lexema;
+            index++;
+            if (index >= ts.Count) return false;
+
+            if (ts[index].Token != "Variable" && ts[index].Token != "Entero")
+            {
+                Errors.Add($"Error ({ts[startIndex].Linea}): Se esperaba variable o número");
+                index = startIndex;
+                return false;
+            }
+            index++;
+
+            if (index >= ts.Count || ts[index].Lexema != ";")
+            {
+                Errors.Add($"Error ({ts[startIndex].Linea}): Se esperaba ';'");
+                index = startIndex;
+                return false;
+            }
+            index++;
+
             return true;
         }
         private bool Lectura(List<Simbolo> ts, ref int index)
         {
+            int startIndex = index;
+
+            if (index < 0 || index >= ts.Count)
+                return false;
+
+            if (ts[index].Lexema != "lee")
+            {
+                return false;
+            }
+            index++;
+            if (index >= ts.Count) return false;
+
+
+            if (ts[index].Lexema != ">>")
+            {
+                Errors.Add($"Error ({ts[startIndex].Linea}): Se esperaba '>>'");
+                index = startIndex;
+                return false;
+            }
+            index++;
+            if (index >= ts.Count) return false;
+
+            if (ts[index].Token != "Variable")
+            {
+                Errors.Add($"Error ({ts[startIndex].Linea}): Se esperaba variable");
+                index = startIndex;
+                return false;
+            }
+            index++;
+            if (index >= ts.Count) return false;
+
+            if (ts[index].Lexema != ";")
+            {
+                Errors.Add($"Error ({ts[startIndex].Linea}): Se esperaba ';'");
+                index = startIndex;
+                return false;
+            }
+            index++;
+
             return true;
         }
         private bool Escritura(List<Simbolo> ts, ref int index)
         {
+            int startIndex = index;
+
+            if (index < 0 || index >= ts.Count)
+                return false;
+
+            if (ts[index].Lexema != "imp")
+            {
+                return false;
+            }
+            index++;
+            if (index >= ts.Count) return false;
+
+            if (ts[index].Lexema != "<<")
+            {
+                Errors.Add($"Error ({ts[startIndex].Linea}): Se esperaba '<<'");
+                index = startIndex;
+                return false;
+            }
+            index++;
+            if (index >= ts.Count)
+                return false;
+
+            if (!(ts[index].Token == "Cadena" ||
+                  ts[index].Token == "Variable" ||
+                  ts[index].Token == "Entero" ||
+                  ts[index].Lexema == "salto"))
+            {
+                Errors.Add($"Error ({ts[startIndex].Linea}): Se esperaba texto, variable, número o 'salto'");
+                index = startIndex;
+                return false;
+            }
+            index++;
+
+            while (index < ts.Count && ts[index].Lexema == "<<")
+            {
+                index++;
+                if (index >= ts.Count) return false;
+
+                if (!(ts[index].Token == "Cadena" ||
+                      ts[index].Token == "Variable" ||
+                      ts[index].Token == "Entero" ||
+                      ts[index].Lexema == "salto"))
+                {
+                    Errors.Add($"Error ({ts[startIndex].Linea}): Se esperaba texto, variable, número o 'salto'");
+                    index = startIndex;
+                    return false;
+                }
+                index++;
+            }
+
+            if (index >= ts.Count || ts[index].Lexema != ";")
+            {
+                Errors.Add($"Error ({ts[startIndex].Linea}): Se esperaba ';'");
+                index = startIndex;
+                return false;
+            }
+            index++;
+
             return true;
         }
+        private bool Si(List<Simbolo> ts, ref int index)
+        {
+            if (ts[index].Lexema != "si")
+                return false;
+            index++;
 
+            if (!ValidarCondicion(ts, ref index))
+                return false;
+
+            if (ts[index].Lexema != "{")
+                return false;
+            index++;
+
+            while (ts[index].Lexema != "}")
+            {
+                index++;
+                if (index >= ts.Count)
+                    return false;
+            }
+            index++;
+
+            if (index < ts.Count && ts[index].Lexema == "sino")
+            {
+                index++;
+                if (ts[index].Lexema != "{")
+                    return false;
+                index++;
+
+                while (ts[index].Lexema != "}")
+                {
+                    index++;
+                    if (index >= ts.Count)
+                        return false;
+                }
+                index++;
+            }
+
+            return true;
+        }
+        private bool Cuando(List<Simbolo> ts, ref int index)
+        {
+            if (ts[index].Lexema != "cuando") return false;
+            index++;
+
+            if (!ValidarCondicion(ts, ref index)) return false;
+
+            if (ts[index].Lexema != "{") return false;
+            index++;
+
+            while (ts[index].Lexema != "}")
+            {
+                index++;
+                if (index >= ts.Count) return false;
+            }
+            index++;
+
+            return true;
+        }
+        private bool Para(List<Simbolo> ts, ref int index)
+        {
+            if (ts[index].Lexema != "para")
+                return false;
+            index++;
+
+            if (ts[index].Lexema != "(")
+                return false;
+            index++;
+
+            if (ts[index].Token == "TipoDato")
+            {
+                index++;
+                if (ts[index].Token != "Variable")
+                    return false;
+                index++;
+                if (ts[index].Lexema == "=")
+                {
+                    index++;
+                    if (ts[index].Token != "Entero" && ts[index].Token != "Variable")
+                        return false;
+                    index++;
+                }
+            }
+            else if (ts[index].Token == "Variable") 
+            {
+                index++;
+                if (ts[index].Lexema != "=")
+                    return false;
+                index++;
+                if (ts[index].Token != "Entero" && ts[index].Token != "Variable")
+                    return false;
+                index++;
+            }
+            else
+            {
+                return false;
+            }
+
+            if (ts[index].Lexema != ";")
+                return false;
+            index++;
+
+            if (!ValidarCondicion(ts, ref index))
+                return false;
+            if (ts[index].Lexema != ";")
+                return false;
+            index++;
+
+            if (ts[index].Token != "Variable")
+                return false;
+            index++;
+            if (ts[index].Lexema != "++" && ts[index].Lexema != "--" && ts[index].Lexema != "+=" && ts[index].Lexema != "-=")
+                return false;
+            index++;
+
+            if (ts[index].Lexema != ")")
+                return false;
+            index++;
+
+            if (ts[index].Lexema != "{")
+                return false;
+            index++;
+
+            while (index < ts.Count && ts[index].Lexema != "}")
+            {
+                if (!Sentencias(ts, ref index))
+                    return false;
+            }
+
+            if (index >= ts.Count)
+                return false;
+            index++;
+
+            return true;
+        }
+        private bool ValidarCondicion(List<Simbolo> ts, ref int index)
+        {
+            if (ts[index].Lexema != "(")
+                return false;
+            index++;
+
+            if (ts[index].Token != "Variable" && ts[index].Token != "Entero")
+                return false;
+            index++;
+
+            if (ts[index].Token != "OperadorRelacional")
+                return false;
+            index++;
+
+            if (ts[index].Token != "Variable" && ts[index].Token != "Entero")
+                return false;
+            index++;
+
+            if (ts[index].Lexema != ")")
+                return false;
+            index++;
+
+            return true;
+        }
     }
 
-}
+    }
